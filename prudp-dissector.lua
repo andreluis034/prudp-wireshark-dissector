@@ -132,4 +132,18 @@ function prudp.dissector(tvbuf, pktinfo, root)
     return pktlen
 end
 
+function heuristic_prudp(tvbuf,pktinfo,root)
+    local tvbr = tvbuf:range(0,2)
+    local bytes = tvbr:bytes()
+    if (bytes:get_index(0) == 0xaf and bytes:get_index(1) == 0xa1) 
+        or (bytes:get_index(0) == 0xa1 and bytes:get_index(1) == 0xaf) then
+
+        prudp.dissector(tvbuf,pktinfo,root)
+        return true
+    end
+    return false
+end
+prudp:register_heuristic("udp",heuristic_prudp)
+
+
 DissectorTable.get("udp.port"):add(60000, prudp)
