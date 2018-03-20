@@ -116,7 +116,7 @@ local fields = {
     source = Field.new("prudp.v0.source"),
     destination = Field.new("prudp.v0.destination"),
     v1 = {
-        extradatasize = Field.new("prudp.v1.extradatasize")
+        extradatasize = Field.new("prudp.v1.header.extradatasize")
     }
 }
 
@@ -146,8 +146,9 @@ function dissectv0(tvbuf, pktinfo, root)
     tree:add_le(prudp_v0_sequenceid, tvbuf:range(0x9, 2))
 
     currentPosition = 0xB;
-    if fields.type()() == types.CONNECT then
-        pktinfo.cols.info:set("CONNECT "..identities[fields.source()()].." -> "..identities[fields.destination()()])
+    pktinfo.cols.info:set(types_inverse[fields.type()() ].." "..identities[fields.source()()].." -> "..identities[fields.destination()()])
+
+    if fields.type()() == types.CONNECT or fields.type()() == types.SYN then
         tree:add_le(prudp_v0_connection_signature, tvbuf:range(currentPosition, 4))
         currentPosition = currentPosition + 4
     elseif fields.type()() == types.DATA then
@@ -171,7 +172,6 @@ function dissectv0(tvbuf, pktinfo, root)
     end
 
     if remaining > 1 then
-        message(remaining)
         tree:add(prudp_v0_payload, tvbuf:range(currentPosition, remaining - 1))
         currentPosition = remaining - 1 + currentPosition
     end        
